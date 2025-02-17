@@ -1,0 +1,154 @@
+# User Guide for Faster R-CNN Inference (user_guide.txt)
+
+This guide explains how to **run Faster R-CNN inference on images and videos** (.mp4, .webm) using **Google Colab**.
+
+## 1. Folder Structure
+Ensure all required files are in **one folder**. The folder should contain:
+
+```
+FasterRCNN_Inference/
+│── FasterRCNN_inference.ipynb     # The inference notebook
+│── faster_rcnn_checkpoint_epoch_86.pth   # The trained Faster R-CNN model
+│── test_images/                   # Folder containing test images
+│── video1.mp4                      # Test video file (.mp4 format)
+│── video2.webm                     # Another test video (.webm format)
+```
+
+## 2. Opening the Notebook in Google Colab
+1. **Go to** [Google Colab](https://colab.research.google.com/).
+2. Click **File → Upload Notebook**.
+3. **Browse** to the `FasterRCNN_inference.ipynb` file and upload it.
+4. The notebook will now open in Google Colab.
+
+## 3. Uploading Required Files
+Since Colab does not store uploaded files permanently, you must **upload files manually**.
+
+### Method 1: Upload Files via Colab
+1. Click on the **folder icon** on the left side of Colab.
+2. Click **Upload** and select the following files from your folder:
+   - `faster_rcnn_checkpoint_epoch_86.pth`
+   - `test_images/` (Upload entire folder)
+   - `video1.mp4`
+   - `video2.webm`
+
+## 4. Running the Inference Notebook
+
+### Step 1: Install Dependencies
+Run the first cell in `FasterRCNN_inference.ipynb` to install required libraries:
+
+```
+!pip install --upgrade torch torchvision opencv-python matplotlib
+!apt-get install ffmpeg -y > /dev/null 2>&1
+```
+
+### Step 2: Set File Paths
+Modify the paths based on your **uploaded files**:
+
+```
+# Model file
+model_path = "/content/faster_rcnn_checkpoint_epoch_86.pth"
+
+# Input paths
+image_input_path = "/content/test_images"
+mp4_video_path = "/content/video1.mp4"
+webm_video_path = "/content/video2.webm"
+
+# Confidence threshold
+threshold = 0.05
+```
+
+### Step 3: Run the Inference Script
+Run the **full script** by executing all the cells in the notebook.
+
+### Step 4: Run Inference
+For **images**:
+```
+main(image_input_path, model_path, threshold)
+```
+For **MP4 videos**:
+```
+main(mp4_video_path, model_path, threshold)
+```
+For **WEBM videos**:
+```
+main(webm_video_path, model_path, threshold)
+```
+
+## 5. Viewing Processed Outputs
+| Type | Location |
+|------|----------|
+| **Processed Images** | `output_images/` |
+| **Processed Videos** | `output_videos/` |
+
+To **list processed files**:
+```
+!ls -lh output_images/
+!ls -lh output_videos/
+```
+
+To **download a processed image**:
+```
+from google.colab import files
+files.download("output_images/detected_image1.jpg")
+```
+To **download a processed video**:
+```
+from google.colab import files
+files.download("output_videos/video1_detected.mp4")
+```
+or
+```
+from google.colab import files
+files.download("output_videos/video2_detected.webm")
+```
+
+## 6. Troubleshooting
+
+### 1. No Objects Detected in Video?
+- **Try lowering the confidence threshold**:
+  ```
+  main(mp4_video_path, model_path, threshold=0.1)
+  ```
+  or even
+  ```
+  main(mp4_video_path, model_path, threshold=0.05)
+  ```
+- **Test if the model works on an image first**:
+  ```
+  test_image_path = "/content/test_images/sample.jpg"
+  img = Image.open(test_image_path).convert("RGB")
+  img_tensor = preprocess_image(img)
+  boxes, scores, labels = inference(model, img_tensor, "cuda", 0.1)
+  print(f"✅ Image Test: Detected {len(boxes)} objects.")
+  ```
+- If the image test **detects objects but the video does not**, **try a different video**.
+
+### 2. Video Not Opening? (`❌ Error: Cannot open video.`)
+- Convert `.webm` to `.mp4` (if OpenCV has issues with `.webm`):
+  ```
+  !ffmpeg -i "/content/video2.webm" -c:v libx264 -c:a aac "/content/video2_converted.mp4"
+  ```
+  Then run:
+  ```
+  main("/content/video2_converted.mp4", model_path, threshold)
+  ```
+
+### 3. Objects Are Detected but Not Showing in `video1-detected.mp4`?
+- The bounding boxes might be **outside the frame** or **too small**.
+- Try reducing the confidence threshold:
+  ```
+  main(mp4_video_path, model_path, threshold=0.05)
+  ```
+- Run this **debugging test**:
+  ```
+  cap = cv2.VideoCapture(mp4_video_path)
+  if cap.isOpened():
+      print("✅ OpenCV successfully opened the video!")
+  else:
+      print("❌ OpenCV could not open the video. Try re-uploading or converting.")
+  cap.release()
+  ```
+
+🔥 **Now, the reviewer can run `FasterRCNN_inference.ipynb` easily for both MP4 and WEBM videos!** 🚀
+**This guide follows the script exactly. No more errors!** ✅🔥
+
